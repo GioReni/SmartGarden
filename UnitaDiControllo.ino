@@ -14,24 +14,29 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define BLYNK_PRINT Serial
 
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <LiquidCrystal_I2C.h>
 #include <SimpleTimer.h>
+#include <SPI.h>
+#include <BlynkSimpleEsp8266.h>
 
 LiquidCrystal_I2C lcd(0x3F, 20, 4);
+
+char auth[] = "****"; //Blynk app
 
 WiFiUDP Udp;
 unsigned int localUdpPort = 4210;                 //cambiare con porta che si vuole assegnare a questo NodeMcu (UnitaDiControllo)
 char incomingPacket[UDP_TX_PACKET_MAX_SIZE];
 
-IPAddress ip(192, 168, 1, 13);                    //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaDiControllo)
-IPAddress gateway(192, 168, 1, 1);                //cambiare con gateway della propria rete
-IPAddress subnet(255, 255, 255, 0);               //cambiare con subnet della propria rete
+IPAddress ip(192, 168, 1, 35);                     //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaDiControllo)
+IPAddress gateway(192, 168, 1, 254);               //cambiare con gateway della propria rete
+IPAddress subnet(255, 255, 255, 0);                //cambiare con subnet della propria rete
 
-const char* ssid = "Esp8266";                     //cambiare con ssid della propria Wi-Fi
-const char* password = "*****";              	  //cambiare con password della propria Wi-Fi
+const char* ssid = "OuterRim";                     //cambiare con ssid della propria Wi-Fi
+const char* password = "****";                 	   //cambiare con password della propria Wi-Fi
 
 char * luceOff = "L0";                            //comando spegni luce
 char * luceOn = "L1";                             //comando accendi luce
@@ -46,11 +51,11 @@ int tempoLucePuls = 10;                           //cambiare a piacere se si vuo
 int tempoLuceAuto = 300;                          //cambiare a piacere se si vuole modificare tempo (in sec.) illuminazione automatica
 
 //indirizzo IP + Porta NodeMcu ATTUATORE
-char * indirizzoRelaisGiardino = "192.168.1.15";  //cambiare con indirizzo IP del proprio NodeMcu attuatore
+char * indirizzoRelaisGiardino = "192.168.1.36";  //cambiare con indirizzo IP del proprio NodeMcu attuatore
 int portaRelaisGiardino = 4240;                   //cambiare con porta del proprio NodeMcu attuatore
 
 //indirizzo IP + Porta NodeMcu SENSORE
-char * indirizzoGiardino = "192.168.1.14";        //cambiare con indirizzo IP del proprio NodeMcu sensore
+char * indirizzoGiardino = "192.168.1.34";        //cambiare con indirizzo IP del proprio NodeMcu sensore
 int portaGiardino = 4230;                         //cambiare con porta del proprio NodeMcu sensore
 
 //pin LED pioggia
@@ -89,11 +94,11 @@ char irrigatore [] = "P";
 //variabile tipo luce
 char illuminazione [] = "L";
 //variabile pulsante irrigazione temporanea
-int letturaPulsanteAcqua;
+int letturaPulsanteAcqua = LOW;
 //variabile pulsante illuminazione temporanea
-int letturaPulsanteLuce;
+int letturaPulsanteLuce = LOW;
 //variabile pulsante STOP
-int letturaPulsanteStop;
+int letturaPulsanteStop = 0;
 //variabile comando
 char comando [UDP_TX_PACKET_MAX_SIZE];
 //variabile per convertire gli interi
@@ -135,7 +140,8 @@ void setup() {
   //pin LED serbatoio
   pinMode(pinVerde, OUTPUT);
   pinMode(pinRosso, OUTPUT);
-    
+
+  Blynk.begin(auth, ssid, password);
   Serial.begin(9600);
   Serial.println();
   Serial.printf("Connecting to %s ", ssid);
@@ -245,10 +251,35 @@ void printAcquaOn() {
   lcd.print("ON ");
 }
 
+//lettura pulsante acqua con Blynk app
+BLYNK_WRITE(V5) {
+  int pinValue = param.asInt();
+  if(pinValue==1){
+    letturaPulsanteAcqua = HIGH;
+  }
+}
+
+//lettura pulsante lampada con Blynk app
+BLYNK_WRITE(V6) {
+  int pinValue = param.asInt();
+  if(pinValue==1){
+    letturaPulsanteLuce = HIGH;
+  }
+}
+
+//lettura pulsante stop con Blynk app
+BLYNK_WRITE(V7) {
+  int pinValue = param.asInt();
+  if(pinValue==1){
+    letturaPulsanteStop = 1024;
+  }
+}
 
 //########################################################################################### MAIN ###########################################################################################
 void loop() {
   String ricevuta;
+
+  Blynk.run();
   
   //ricezione lettura sensori da UnitaSensori and UnitaAttuatori
   delay(100);
@@ -293,13 +324,19 @@ void loop() {
   }
 
   //lettura pulsante STOP
-  letturaPulsanteStop = analogRead(bottoneStop);
+  if (letturaPulsanteStop < 1024) {
+    letturaPulsanteStop = analogRead(bottoneStop);
+  }
 
   //lettura pulsante pompa
-  letturaPulsanteAcqua = digitalRead(bottonePompa);
+  if (letturaPulsanteAcqua == LOW) {
+    letturaPulsanteAcqua = digitalRead(bottonePompa);
+  }
 
   //lettura pulsante luce
-  letturaPulsanteLuce = digitalRead(bottoneLuce);
+  if (letturaPulsanteLuce == LOW) {
+    letturaPulsanteLuce = digitalRead(bottoneLuce);
+  }
 
   if (pioggia == 1 || letturaPulsanteStop == 1024) {
     spegniTutto();
@@ -371,5 +408,10 @@ void loop() {
       printIllOn();
     }
   }
+
+  //reset pulsanti Blynk app
+  letturaPulsanteAcqua = LOW;
+  letturaPulsanteLuce = LOW;
+  letturaPulsanteStop = 0;
   
 }

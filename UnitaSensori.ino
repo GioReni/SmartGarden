@@ -14,7 +14,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 #include <Adafruit_Sensor.h>
@@ -23,6 +22,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 #include <SimpleTimer.h>
+#include <BlynkSimpleEsp8266.h>
 
 //Il terminale data del sensore è connesso al D1 del NodeMcu
 #define ONE_WIRE_BUS D1
@@ -35,20 +35,30 @@ DallasTemperature sensors(&oneWire);
 #define DHTTYPE DHT11
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
-const char* ssid = "Esp8266";                                         //cambiare con ssid della propria Wi-Fi
-const char* password = "*****";                                  	  //cambiare con password della propria Wi-Fi
+//Blynk app
+#define BLYNK_PRINT Serial
+WidgetLED serbLED(V4);
+char auth[] = "****";                                                 //auth token Blynk app
+BlynkTimer timer;
+//////
+
+const char* ssid = "OuterRim";                                        //cambiare con ssid della propria Wi-Fi
+const char* password = "****";                                        //cambiare con password della propria Wi-Fi
 
 WiFiUDP Udp;
 unsigned int localUdpPort = 4230;                                     //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaSensori)
 char incomingPacket[UDP_TX_PACKET_MAX_SIZE];  
 char replyPacekt[UDP_TX_PACKET_MAX_SIZE];
 
-IPAddress ip(192, 168, 1, 14);                                        //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaSensori)                                    
-IPAddress gateway(192, 168, 1, 1);                                    //cambiare con gateway della propria rete
+IPAddress ip(192, 168, 1, 34);                                        //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaSensori)                                    
+IPAddress gateway(192, 168, 1, 254);                                  //cambiare con gateway della propria rete
 IPAddress subnet(255, 255, 255, 0);                                   //cambiare con subnet della propria rete
 
-char * indirizzoUnitaDiControllo = "192.168.1.13";                    //cambiare con indirizzo IP del proprio NodeMcu UnitaDiControllo
+char * indirizzoUnitaDiControllo = "192.168.1.35";                    //cambiare con indirizzo IP del proprio NodeMcu UnitaDiControllo
 int portaUnitaDiControllo = 4210;                                     //cambiare con porta del proprio NodeMcu unita di controllo
+int temperatura = 0;
+int umidita = 0;
+double temperaturaTerra = 0.0;
 
 
 //########################################################################################### SETUP ###########################################################################################
@@ -69,6 +79,14 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
   Serial.printf("Connecting to %s ", ssid);
+
+  //Connessione con Blynk app
+  Blynk.begin(auth, ssid, password); 
+  timer.setInterval(1000L, myTempEvent);
+  timer.setInterval(1000L, myUmEvent);
+  timer.setInterval(1000L, myTempTerraEvent);
+  ///////////////////////////////////////
+  
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
@@ -115,7 +133,7 @@ void getTempHum(char lista[UDP_TX_PACKET_MAX_SIZE]) {
     strcat(lista, "Tn");
   }
   else {
-    int temperatura = evento.temperature;
+    temperatura = evento.temperature;
     strcat(lista, "T");
     itoa(temperatura, degree, 10);
     strcat(lista, degree);  
@@ -126,7 +144,7 @@ void getTempHum(char lista[UDP_TX_PACKET_MAX_SIZE]) {
     strcat(lista, "Hn");
   }
   else {
-    int umidita = evento.relative_humidity;
+    umidita = evento.relative_humidity;
     strcat(lista, "H");
     itoa(umidita, humidity, 10);
     strcat(lista, humidity);
@@ -141,7 +159,7 @@ void getTempEarth(char lista[UDP_TX_PACKET_MAX_SIZE]) {
     strcat(lista, "THn");
   }
   else {
-    double temperaturaTerra = sensors.getTempCByIndex(0);
+    temperaturaTerra = sensors.getTempCByIndex(0);
     strcat(lista, "TH");
     dtostrf(temperaturaTerra, 2, 2, tempEarth);
     strcat(lista, tempEarth);
@@ -181,9 +199,11 @@ void getWaterLevel(char lista[UDP_TX_PACKET_MAX_SIZE]) {
   int livelloSerbatoio = digitalRead(D4);
   if(livelloSerbatoio==1) {
     strcat(lista, "S0");
+    serbLED.off(); //Blynk app
   }
   else if(livelloSerbatoio==0) {
     strcat(lista, "S1");
+    serbLED.on(); //Blynk app
   }
   else {
     strcat(lista, "Sn");
@@ -202,8 +222,25 @@ void sendPacket(char pacchetto [8], char * indirizzo, int porta) {
   Udp.endPacket();
 }
 
+void myTempEvent() {
+  Blynk.virtualWrite(V1, temperatura);
+}
+
+void myUmEvent() {
+  Blynk.virtualWrite(V2, umidita);
+}
+
+void myTempTerraEvent() {
+  Blynk.virtualWrite(V3, temperaturaTerra);
+}
+
+
 //########################################################################################### MAIN ###########################################################################################
 void loop() {
+
+  Blynk.run();
+  timer.run(); //Blynk app
+  
   //ogni secondo UnitaSensori invia i propri dati a UnitaDiControllo
   delay(1000);
   clearArray(replyPacekt);
@@ -229,4 +266,3 @@ void loop() {
   //invio temperatura dell'aria + umidita' (pacchetto UDP) a UnitaDiControllo
   sendPacket(replyPacekt, indirizzoUnitaDiControllo, portaUnitaDiControllo);
 }
-
