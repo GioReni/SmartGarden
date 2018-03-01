@@ -62,9 +62,9 @@ Infine quest'applicazione invia delle utili notifiche a tutti i dispositivi che 
 - 1 5V 2-Channel Relay Module
 - 3 Pulsanti
 - 1 resistenza da 100 Ohms
-- 1 resistenza da 220 0hms
-- 1 resistenza da 4.7 kOhms
+- 1 resistenza da 220 Ohms
 - 1 resistenza da 1 kOhm
+- 1 resistenza da 4.7 kOhms
 - 5 resistenze da 10 kOhms
 - 4 LED (Red, Green, Blue, Yellow)
 - 1 KY-015 Sensore di temperatura e umidità dell'aria (DHT11)
