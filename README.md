@@ -39,8 +39,8 @@ Descriviamo più dettagliamente il nodeMCU "controllore" (UnitaDiControllo), che
 Esso ogni n secondi, riceve dal primo nodeMCU che controlla i sensori, i dati che ha letto.
 Il controllore riceve ed elabora quindi i dati, e decide se azionare o meno i relays del terzo nodeMCU (UnitaAttuatori).
 Attaccati a questo nodeMCU "controllore", abbiamo:
-- Uno schermo a LED, sul quale possiamo visualizzare i dati letti dal primo nodeMCU (UnitaSensori), quindi: temperatura e umidità dell'aria, temperatura della terra, l'umidità della terra (terreni arido o umido) e infine lo stato acceso/spento dell'irrigazione e della luce della lampada.
-- Quattore led: uno di colore blu, che segnala la presenza (acceso) o assenza (spento) di pioggia (funziona tramite sensore di pioggia), uno di colore giallo, che segnala la presenza (acceso) o assenza (spento) della luce del sole (funziona tramite fotoresistore), uno di colore verde, che si accende solamente quando la cisterna è piena, e uno di colore rosso che si accende solamente quando la cisterna è vuota.
+- Uno schermo LCD, sul quale possiamo visualizzare i dati letti dal primo nodeMCU (UnitaSensori), quindi: temperatura e umidità dell'aria, temperatura della terra, l'umidità della terra (terreni arido o umido) e infine lo stato acceso/spento dell'irrigazione e della luce della lampada.
+- Quattro led: uno di colore blu, che segnala la presenza (acceso) o assenza (spento) di pioggia (funziona tramite sensore di pioggia), uno di colore giallo, che segnala la presenza (acceso) o assenza (spento) della luce del sole (funziona tramite fotoresistore), uno di colore verde, che si accende solamente quando la cisterna è piena, e uno di colore rosso che si accende solamente quando la cisterna è vuota.
 un'altro, che può assumere i colori verde e rosso: verde nel caso la cisterna sia piena d'acqua, e rosso nel caso sia vuota.
 - Tre bottoni: essi, fanno scattare i relays del nodeMCU esterno (UnitaAttuatori). Un bottone comanda l'apertura dell'irrigazione, uno l'accensione della lampada e l'ultimo l'arresto di entrambe queste attività.
 
@@ -60,9 +60,13 @@ Infine quest'applicazione invia delle utili notifiche a tutti i dispositivi che 
 - Pompa acqua 220V
 - 1 5V 1-Channel Relay Module
 - 1 5V 2-Channel Relay Module
-- 3 KY-004 Modulo Pulsante Key
-- 1 resistenza da 4.1 KOhms
-- 4 KY-016 modulo Led RGB full color
+- 3 Pulsanti
+- 1 resistenza da 100 Ohms
+- 1 resistenza da 220 0hms
+- 1 resistenza da 4.7 kOhms
+- 1 resistenza da 1 kOhm
+- 5 resistenze da 10 kOhms
+- 4 LED (Red, Green, Blue, Yellow)
 - 1 KY-015 Sensore di temperatura e umidità dell'aria (DHT11)
 - 1 Modulo LCD 20x4 I2C/TWI
 
