@@ -36,7 +36,7 @@ IPAddress gateway(192, 168, 1, 254);               //cambiare con gateway della 
 IPAddress subnet(255, 255, 255, 0);                //cambiare con subnet della propria rete
 
 const char* ssid = "OuterRim";                     //cambiare con ssid della propria Wi-Fi
-const char* password = "****";                 	   //cambiare con password della propria Wi-Fi
+const char* password = "***";                 	   //cambiare con password della propria Wi-Fi
 
 char * luceOff = "L0";                            //comando spegni luce
 char * luceOn = "L1";                             //comando accendi luce
@@ -107,7 +107,7 @@ char temp [15];
 int numero;
 
 
-//######################################################################################### METHODS 1 #########################################################################################
+//######################################################################################## FUNCTIONS 1 ########################################################################################
 void printIllOff() {
   lcd.setCursor(0,3);
   lcd.print("Luce:");
@@ -133,8 +133,8 @@ void setup() {
   pinMode(pinBlu, OUTPUT);
 
   //pin bottoni STOP, IRRIGAZIONE, LUCE
-  pinMode(bottonePompa, INPUT_PULLUP);
-  pinMode(bottoneStop, INPUT_PULLUP);
+  pinMode(bottonePompa, INPUT);
+  pinMode(bottoneStop, INPUT);
   pinMode(bottoneLuce, INPUT);
   
   //pin LED serbatoio
@@ -166,7 +166,7 @@ void setup() {
 }
 
 
-//########################################################################################## METHODS ##########################################################################################
+//######################################################################################## FUNCTIONS 2 ########################################################################################
 void sendPacket(char pacchetto [8], char * indirizzo, int porta) {
   Udp.beginPacket(indirizzo, porta);
   Udp.write(pacchetto);

@@ -43,12 +43,11 @@ BlynkTimer timer;
 //////
 
 const char* ssid = "OuterRim";                                        //cambiare con ssid della propria Wi-Fi
-const char* password = "****";                                        //cambiare con password della propria Wi-Fi
+const char* password = "***";                                         //cambiare con password della propria Wi-Fi
 
 WiFiUDP Udp;
 unsigned int localUdpPort = 4230;                                     //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaSensori)
-char incomingPacket[UDP_TX_PACKET_MAX_SIZE];  
-char replyPacekt[UDP_TX_PACKET_MAX_SIZE];
+char replyPacket[UDP_TX_PACKET_MAX_SIZE];
 
 IPAddress ip(192, 168, 1, 34);                                        //cambiare con indirizzo IP che si vuole assegnare a questo NodeMcu (UnitaSensori)                                    
 IPAddress gateway(192, 168, 1, 254);                                  //cambiare con gateway della propria rete
@@ -59,6 +58,20 @@ int portaUnitaDiControllo = 4210;                                     //cambiare
 int temperatura = 0;
 int umidita = 0;
 double temperaturaTerra = 0.0;
+
+
+//######################################################################################## FUNCTIONS 1 ########################################################################################
+void myTempEvent() {
+  Blynk.virtualWrite(V1, temperatura);
+}
+
+void myUmEvent() {
+  Blynk.virtualWrite(V2, umidita);
+}
+
+void myTempTerraEvent() {
+  Blynk.virtualWrite(V3, temperaturaTerra);
+}
 
 
 //########################################################################################### SETUP ###########################################################################################
@@ -81,11 +94,11 @@ void setup() {
   Serial.printf("Connecting to %s ", ssid);
 
   //Connessione con Blynk app
-  Blynk.begin(auth, ssid, password); 
+  Blynk.begin(auth, ssid, password);
+  
   timer.setInterval(1000L, myTempEvent);
   timer.setInterval(1000L, myUmEvent);
   timer.setInterval(1000L, myTempTerraEvent);
-  ///////////////////////////////////////
   
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid, password);
@@ -109,7 +122,7 @@ void setup() {
 }
 
 
-//########################################################################################## METHODS ##########################################################################################
+//######################################################################################## FUNCTIONS 2 ########################################################################################
 //[1]Is it raining? yes/no
 void getRain(char lista[UDP_TX_PACKET_MAX_SIZE]) {
   int pioggia = digitalRead(D2);
@@ -222,47 +235,35 @@ void sendPacket(char pacchetto [8], char * indirizzo, int porta) {
   Udp.endPacket();
 }
 
-void myTempEvent() {
-  Blynk.virtualWrite(V1, temperatura);
-}
-
-void myUmEvent() {
-  Blynk.virtualWrite(V2, umidita);
-}
-
-void myTempTerraEvent() {
-  Blynk.virtualWrite(V3, temperaturaTerra);
-}
-
 
 //########################################################################################### MAIN ###########################################################################################
 void loop() {
 
-  Blynk.run();
-  timer.run(); //Blynk app
+  Blynk.run();  //Blynk app
+  timer.run(); 
   
   //ogni secondo UnitaSensori invia i propri dati a UnitaDiControllo
   delay(1000);
-  clearArray(replyPacekt);
+  clearArray(replyPacket);
   
   //sensore temp. + umid. dell'aria
-  getTempHum(replyPacekt);
+  getTempHum(replyPacket);
   
   //sensore temp. della terra
-  getTempEarth(replyPacekt);
+  getTempEarth(replyPacket);
 
   //sensore pioggia
-  getRain(replyPacekt);
+  getRain(replyPacket);
 
   //sensore fotoresistenza
-  getLight(replyPacekt);
+  getLight(replyPacket);
 
   //sensore umidita' terra
-  getMoisture(replyPacekt);
+  getMoisture(replyPacket);
   
   //interruttore a galleggiante
-  getWaterLevel(replyPacekt);
+  getWaterLevel(replyPacket);
   
-  //invio temperatura dell'aria + umidita' (pacchetto UDP) a UnitaDiControllo
-  sendPacket(replyPacekt, indirizzoUnitaDiControllo, portaUnitaDiControllo);
+  //invio tutti i dati letti dai sensori (pacchetto UDP) a UnitaDiControllo
+  sendPacket(replyPacket, indirizzoUnitaDiControllo, portaUnitaDiControllo);
 }

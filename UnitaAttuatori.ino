@@ -29,7 +29,7 @@ IPAddress gateway(192, 168, 1, 254);                                      //camb
 IPAddress subnet(255, 255, 255, 0);                                       //cambiare con subnet della propria rete
 
 const char* ssid = "OuterRim";                                            //cambiare con ssid della propria Wi-Fi
-const char* password = "****";                                            //cambiare con password della propria Wi-Fi
+const char* password = "***";                                             //cambiare con password della propria Wi-Fi
 
 char * indirizzoUnitaDiControllo = "192.168.1.35";                        //cambiare con indirizzo IP del proprio NodeMcu UnitaDiControllo
 int portaUnitaDiControllo = 4210;                                         //cambiare con porta del proprio NodeMcu UnitaDiControllo
@@ -37,7 +37,6 @@ int portaUnitaDiControllo = 4210;                                         //camb
 int lucePianta = D0;
 int relaisPompa = D1;
 int relaisElettrovalvola = D2;
-int lampadaAccesa = 0;
 
 //variabile spegni acqua
 char spegniAcqua[] = "Water";
@@ -47,6 +46,7 @@ char spegniLuce[] = "Light";
 int tempoInizioIrr = 0;
 int tempoDurataIrr = 0;
 boolean innaffia = false;
+boolean illumina = false;
 int tempoInizioIll = 0;
 int tempoDurataIll = 0;
 
@@ -85,7 +85,7 @@ void setup() {
 }
 
 
-//########################################################################################## METHODS ##########################################################################################
+//######################################################################################### FUNCTIONS #########################################################################################
 void sendPacket(char pacchetto [8], char * indirizzo, int porta) {
   Udp.beginPacket(indirizzo, porta);
   Udp.write(pacchetto);
@@ -98,7 +98,6 @@ void loop() {
   Blynk.run();
   //attesa richiesta scatto relais
   String ricevuta;
-  char replyPacekt[UDP_TX_PACKET_MAX_SIZE];
   int packetSize = Udp.parsePacket();
   if (packetSize)
   {
@@ -116,6 +115,7 @@ void loop() {
    //LOW su relais luce, la spegne
    if (ricevuta.indexOf("L0") != -1) {
       digitalWrite(lucePianta, LOW);
+      illumina = false;
       tempoDurataIll = 0;
       Blynk.notify("L'impianto di irrigazione e di illuminazione si sono arrestati per STOP o PIOGGIA");
    }
@@ -143,7 +143,8 @@ void loop() {
       digitalWrite(relaisElettrovalvola, LOW);
       Blynk.notify("L'impianto di irrigazione si e' acceso");
     }
-    else if (ricevuta.indexOf("L1") != -1) {
+    else if (ricevuta.indexOf("L1") != -1 && illumina == false) {
+      illumina = true;
       tempoInizioIll = millis();
       tempoDurataIll = tempoInizioIll + (ricevuta.substring(ricevuta.indexOf("L1")+2).toInt()*1000);
       digitalWrite(lucePianta, HIGH);
@@ -170,10 +171,10 @@ void loop() {
     }
     if(tempoDurataIll != 0 && millis() > tempoDurataIll) {
       digitalWrite(lucePianta, LOW);
+      illumina = false;
       sendPacket(spegniLuce, indirizzoUnitaDiControllo, portaUnitaDiControllo);
       tempoDurataIll = 0;
       Blynk.notify("L'impianto di illuminazione si e' spento automaticamente");
     }
     
 }
-
