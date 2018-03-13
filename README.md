@@ -1,4 +1,4 @@
-# Progetto SmartGarden - Corso Sistemi Embedded (Università degli Studi di Milano, Anno 2017-2018)
+# Progetto SmartGarden - Corso Sistemi Embedded (Università degli Studi di Milano, Anno Accademico 2017-2018)
 
 ## Autori:
 Alessandro Gigliotti, Giovanni Reni 
