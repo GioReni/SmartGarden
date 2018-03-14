@@ -28,8 +28,8 @@ IPAddress ip(192, 168, 1, 36);                                            //camb
 IPAddress gateway(192, 168, 1, 254);                                      //cambiare con gateway della propria rete
 IPAddress subnet(255, 255, 255, 0);                                       //cambiare con subnet della propria rete
 
-const char* ssid = "OuterRim";                                            //cambiare con ssid della propria Wi-Fi
-const char* password = "***";                                             //cambiare con password della propria Wi-Fi
+const char* ssid = "ArduinoAfternoon";                                            //cambiare con ssid della propria Wi-Fi
+const char* password = "***"; 	                                          //cambiare con password della propria Wi-Fi
 
 char * indirizzoUnitaDiControllo = "192.168.1.35";                        //cambiare con indirizzo IP del proprio NodeMcu UnitaDiControllo
 int portaUnitaDiControllo = 4210;                                         //cambiare con porta del proprio NodeMcu UnitaDiControllo
@@ -71,6 +71,7 @@ void setup() {
   Serial.begin(9600);
   Serial.println();
   Serial.printf("Connecting to %s ", ssid);
+  //WiFi.mode(WIFI_STA);
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
@@ -80,6 +81,8 @@ void setup() {
   }
   Serial.println(" connected");
 
+  //Serial.print("Indirizzo IP UnitaAttuatori: ");
+  //Serial.pritnln(WiFi.localIP());
   Udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 }
@@ -99,15 +102,10 @@ void loop() {
   //attesa richiesta scatto relais
   String ricevuta;
   int packetSize = Udp.parsePacket();
-  if (packetSize)
-  {
+  if (packetSize > 0) {
    //receive incoming UDP packets
    //Serial.printf("Received %d bytes from %s, port %d\n", packetSize, Udp.remoteIP().toString().c_str(), Udp.remotePort());
-   int len = Udp.read(incomingPacket, 255);
-   if (len > 0)
-   {
-     incomingPacket[len] = 0;
-   }
+   Udp.read(incomingPacket, packetSize);
    Serial.printf("UDP packet contents: %s\n", incomingPacket);
    ricevuta = String(incomingPacket);
     

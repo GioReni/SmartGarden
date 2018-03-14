@@ -35,7 +35,7 @@ IPAddress ip(192, 168, 1, 35);                     //cambiare con indirizzo IP c
 IPAddress gateway(192, 168, 1, 254);               //cambiare con gateway della propria rete
 IPAddress subnet(255, 255, 255, 0);                //cambiare con subnet della propria rete
 
-const char* ssid = "OuterRim";                     //cambiare con ssid della propria Wi-Fi
+const char* ssid = "ArduinoAfternoon";                     //cambiare con ssid della propria Wi-Fi
 const char* password = "***";                 	   //cambiare con password della propria Wi-Fi
 
 char * luceOff = "L0";                            //comando spegni luce
@@ -53,10 +53,6 @@ int tempoLuceAuto = 300;                          //cambiare a piacere se si vuo
 //indirizzo IP + Porta NodeMcu ATTUATORE
 char * indirizzoRelaisGiardino = "192.168.1.36";  //cambiare con indirizzo IP del proprio NodeMcu attuatore
 int portaRelaisGiardino = 4240;                   //cambiare con porta del proprio NodeMcu attuatore
-
-//indirizzo IP + Porta NodeMcu SENSORE
-char * indirizzoGiardino = "192.168.1.34";        //cambiare con indirizzo IP del proprio NodeMcu sensore
-int portaGiardino = 4230;                         //cambiare con porta del proprio NodeMcu sensore
 
 //pin LED pioggia
 int pinGiallo = D5;
@@ -142,9 +138,11 @@ void setup() {
   pinMode(pinRosso, OUTPUT);
 
   Blynk.begin(auth, ssid, password);
+  
   Serial.begin(9600);
   Serial.println();
   Serial.printf("Connecting to %s ", ssid);
+  //WiFi.mode(WIFI_STA);
   WiFi.config(ip, gateway, subnet);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED)
@@ -154,6 +152,8 @@ void setup() {
   }
   Serial.println(" connected");
 
+  //Serial.print("Indirizzo IP UnitaDiControllo: ");
+  //Serial.pritnln(WiFi.localIP());
   Udp.begin(localUdpPort);
   Serial.printf("Now listening at IP %s, UDP port %d\n", WiFi.localIP().toString().c_str(), localUdpPort);
 
@@ -285,14 +285,10 @@ void loop() {
   delay(100);
   int packetSize = Udp.parsePacket();
   
-  if (packetSize) 
-  {
+  if (packetSize > 0) {
     //Serial.printf("Received %d bytes from %s, port %d\n", packetSize, Udp.remoteIP().toString().c_str(), Udp.remotePort());
-    int len = Udp.read(incomingPacket, UDP_TX_PACKET_MAX_SIZE);
-    if (len > 0)
-    {
-      incomingPacket[len] = 0;
-      ricevuta = String(incomingPacket);
+    Udp.read(incomingPacket, packetSize);
+    ricevuta = String(incomingPacket);
       //ricezione dati sensori da UnitaSensori
       if (ricevuta.indexOf("T") != -1) {
         temperatura = ricevuta.substring(ricevuta.indexOf("T")+1, ricevuta.indexOf("H")).toInt();
@@ -318,7 +314,6 @@ void loop() {
       else if (ricevuta.indexOf("i") != -1) {
         printIllOff();
       }
-    }
      Serial.printf("UDP packet contents: %s\n", incomingPacket);
      clearArray(incomingPacket);
   }
